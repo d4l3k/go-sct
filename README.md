@@ -4,13 +4,21 @@ A color temperature setting library and CLI that operates in a similar way to f.
 
 The command line app automatically determines your location using GeoIP and adjusts the color temperature depending on time.
 
+For wayland support replace all commands with `waysct` instead of `sct`.
+
 ```sh
-$ go get -u github.com/d4l3k/go-sct/sct
+# For X11 and Windows
+$ go get -u github.com/d4l3k/go-sct/cmd/sct
 
 $ sct # Launch in background
 $ sct 3000 # One time temperature change. Temperature must be 1000-10000.
+
+# For Wayland
+$ go get -u github.com/d4l3k/go-sct/cmd/waysct
+
+$ waysct # Launch in background
+$ waysct 3000 # One time temperature change. Wayland requires a persistent manager so this will immediately revert.
 ```
-This requires Go and (the Xrandr library or Windows).
 
 ## Windows
 By default, the lowest color temperature allowed is around 4500K. More
@@ -33,6 +41,10 @@ go-sct also provides the `geoip` package which is a packaged version of
 http://devdungeon.com/content/ip-geolocation-go
 
 ## License
+Made by [Tristan Rice](https://fn.lc).
+
 go-sct is licensed under the MIT license. `geoip` and `sct` are copyrighted by their respective owners.
 
-Made by [Tristan Rice](https://fn.lc).
+`waysct` is using code from the redshift implementation and is licensed under
+GPLv3. See https://github.com/minus7/redshift/commit/7da875d34854a6a34612d5ce4bd8718c32bec804
+
