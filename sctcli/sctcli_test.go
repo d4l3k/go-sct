@@ -42,8 +42,10 @@ func TestGetCurrentColorTemp(t *testing.T) {
 func TestInterpolate(t *testing.T) {
 	totalTime = 100 * time.Millisecond
 
+	c := SCTCLI{SetColorTemp: func(temp int) error { return nil }}
+
 	for _, want := range []int{3000, 6500} {
-		if err := interpolateColorTemp(want); err != nil {
+		if err := c.interpolateColorTemp(want); err != nil {
 			t.Fatal(err)
 		}
 		temp, err := getCurrentColorTemp()
