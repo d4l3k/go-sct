@@ -1,4 +1,4 @@
-package main
+package sctcli
 
 import (
 	"flag"
@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/cpucycle/astrotime"
-	"github.com/d4l3k/go-sct"
 	"github.com/d4l3k/go-sct/geoip"
 )
 
@@ -25,11 +24,24 @@ var sunsetTimeStr = flag.String("sunset-time", "21:00", "Sunset time (HH:MM)")
 var middayTimeStr = flag.String("midday-time", "14:00", "Mid day (brightest) time (HH:MM)")
 var midnight, sunriseTime, sunsetTime, middayTime time.Time
 
-func monitorGeo() {
+func Main(setColorTemp func(temp int) error) {
+	c := SCTCLI{
+		SetColorTemp: setColorTemp,
+	}
+	if err := c.Run(); err != nil {
+		log.Fatalf("%+v", err)
+	}
+}
+
+type SCTCLI struct {
+	SetColorTemp func(temp int) error
+}
+
+func (c SCTCLI) monitorGeo() error {
 	log.Printf("Fetching location...")
 	geo, err := geoip.LookupIP("")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	log.Printf(" - City: %s, Lat: %f, Lon: %f", geo.City, geo.Latitude, geo.Longitude)
 	log.Printf("Monitoring daylight settings...")
@@ -45,13 +57,13 @@ func monitorGeo() {
 		lastState = &state
 		if state {
 			log.Print("Good night!")
-			if err := interpolateColorTemp(*nightTemp); err != nil {
-				log.Fatalf("%+v", err)
+			if err := c.interpolateColorTemp(*nightTemp); err != nil {
+				return err
 			}
 		} else {
 			log.Print("Good morning!")
-			if err := interpolateColorTemp(*dayTemp); err != nil {
-				log.Fatalf("%+v", err)
+			if err := c.interpolateColorTemp(*dayTemp); err != nil {
+				return err
 			}
 		}
 	}
@@ -62,7 +74,7 @@ var (
 	stepEvery = 1 * time.Second / 60
 )
 
-func interpolateColorTemp(new int) error {
+func (c SCTCLI) interpolateColorTemp(new int) error {
 	old, err := getCurrentColorTemp()
 	if err != nil {
 		return err
@@ -71,11 +83,15 @@ func interpolateColorTemp(new int) error {
 	steps := int(totalTime / stepEvery)
 	stepSize := (new - old) / steps
 	for i := 0; i < steps; i++ {
-		c := time.After(stepEvery)
-		sct.SetColorTemp(old + stepSize*i)
-		<-c
+		timer := time.After(stepEvery)
+		if err := c.SetColorTemp(old + stepSize*i); err != nil {
+			return err
+		}
+		<-timer
 	}
-	sct.SetColorTemp(new)
+	if err := c.SetColorTemp(new); err != nil {
+		return err
+	}
 
 	return saveCurrentColorTemp(new)
 }
@@ -100,7 +116,7 @@ func getCurrentColorTemp() (int, error) {
 	return strconv.Atoi(string(body))
 }
 
-func monitorTime() {
+func (c SCTCLI) monitorTime() error {
 	var monitorTemperature int
 	monitorTemperature = 6500
 
@@ -128,18 +144,21 @@ func monitorTime() {
 		} else {
 			monitorTemperature = *nightTemp
 		}
-		sct.SetColorTemp(monitorTemperature)
+		if err := c.SetColorTemp(monitorTemperature); err != nil {
+			return err
+		}
 		time.Sleep(10 * time.Minute)
 	}
 }
 
-func main() {
+func (c SCTCLI) Run() error {
 	flag.Parse()
 	args := flag.Args()
+
 	if len(args) == 1 {
 		if temp, err := strconv.Atoi(args[0]); err == nil {
-			if err := interpolateColorTemp(temp); err != nil {
-				log.Fatalf("%+v", err)
+			if err := c.interpolateColorTemp(temp); err != nil {
+				return err
 			}
 		}
 	} else if len(args) == 0 {
@@ -148,13 +167,13 @@ func main() {
 		midnight = time.Date(curTime.Year(), curTime.Month(), curTime.Day(), 0, 0, 0, 0, time.Local)
 		var perr error
 		if sunriseTime, perr = time.ParseInLocation("2006-01-02 15:04", midnight.Format("2006-01-02 ")+*sunriseTimeStr, time.Local); perr != nil {
-			log.Fatal(perr)
+			return perr
 		}
 		if sunsetTime, perr = time.ParseInLocation("2006-01-02 15:04", midnight.Format("2006-01-02 ")+*sunsetTimeStr, time.Local); perr != nil {
-			log.Fatal(perr)
+			return perr
 		}
 		if middayTime, perr = time.ParseInLocation("2006-01-02 15:04", midnight.Format("2006-01-02 ")+*middayTimeStr, time.Local); perr != nil {
-			log.Fatal(perr)
+			return perr
 		}
 
 		if *daemon {
@@ -173,10 +192,15 @@ func main() {
 		} else {
 			switch *mode {
 			case "timed":
-				monitorTime()
+				if err := c.monitorTime(); err != nil {
+					return err
+				}
 			default:
-				monitorGeo()
+				if err := c.monitorGeo(); err != nil {
+					return err
+				}
 			}
 		}
 	}
+	return nil
 }
