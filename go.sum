@@ -1,0 +1,4 @@
+github.com/cpucycle/astrotime v0.0.0-20120927164819-9c7d514efdb5 h1:Z6YGTs9TwkwIVCltpgUNFa+L5SAyGfIL9gH0RB7yDgw=
+github.com/cpucycle/astrotime v0.0.0-20120927164819-9c7d514efdb5/go.mod h1:O+WdStE4WLD+lG5MaDRl9dSJR7w4HZJrJbqVsOEx5Lw=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
