@@ -42,7 +42,7 @@ func (m *Manager) SetColorTemp(temp int) error {
 	setting.gamma[0] = 1.0
 	setting.gamma[1] = 1.0
 	setting.gamma[2] = 1.0
-	setting.temperature = 2700
+	setting.temperature = C.int(temp)
 	if errno := C.wayland_set_temperature(m.state, &setting); errno != 0 {
 		return errors.Errorf("wayland_set_temperature: errno %d", errno)
 	}
