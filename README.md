@@ -8,13 +8,13 @@ For wayland support replace all commands with `waysct` instead of `sct`.
 
 ```sh
 # For X11 and Windows
-$ go get -u github.com/d4l3k/go-sct/cmd/sct
+$ go install github.com/d4l3k/go-sct/cmd/sct@latest
 
 $ sct # Launch in background
 $ sct 3000 # One time temperature change. Temperature must be 1000-10000.
 
 # For Wayland
-$ go get -u github.com/d4l3k/go-sct/cmd/waysct
+$ go install github.com/d4l3k/go-sct/cmd/waysct@latest
 
 $ waysct # Launch in background
 $ waysct 3000 # One time temperature change. Wayland requires a persistent manager so this will immediately revert.
